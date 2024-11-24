@@ -10,8 +10,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class ProjectApplication {
 
+	@GetMapping("/student-login")
+	public String studentLogin() {
+		return "student-login";
+	}
+
 	@GetMapping("/")
-	public String index() {
+	public String home() {
 		return "index";
 	}
 
