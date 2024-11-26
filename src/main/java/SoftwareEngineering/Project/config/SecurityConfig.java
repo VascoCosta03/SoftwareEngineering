@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 
@@ -38,13 +39,16 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .successHandler(customAuthenticationSuccessHandler()) // Use the custom success handler
+                        .successHandler(customAuthenticationSuccessHandler()) // Custom authentication success handler
                         .permitAll()
                 )
                 .logout(logout -> logout.permitAll());
 
+
         return http.build();
     }
+
+
 
     // Custom Authentication Success Handler Bean
     @Bean

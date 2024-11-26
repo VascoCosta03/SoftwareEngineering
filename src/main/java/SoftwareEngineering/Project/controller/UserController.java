@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Optional;
 
@@ -22,13 +23,11 @@ public class UserController {
     }
 
     @GetMapping("/login")
-    public String login() {
+    public String login(@RequestParam(value = "logout", required = false) String logout, Model model) {
+        if (logout != null) {
+            model.addAttribute("logoutMessage", "You have been successfully logged out.");
+        }
         return "login";
-    }
-
-    @PostMapping("/logout")
-    public String logout() {
-        return "logout";
     }
 
     @GetMapping("/")
