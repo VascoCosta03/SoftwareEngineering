@@ -8,11 +8,14 @@ public class User {
 
     @Id
     private String id;
+    private String firstName;
+    private String lastName;
     private String username;
     private String password;
     private String role;
+    private String pictureUrl;
 
-
+    
     public User() {}
 
     public User(String username, String password, String role) {
@@ -37,6 +40,22 @@ public class User {
         this.username = username;
     }
 
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
     public String getPassword() {
         return password;
     }
@@ -51,5 +70,13 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPictureUrl() {
+        return pictureUrl;
+    }
+
+    public void setPictureUrl(String pictureUrl) {
+        this.pictureUrl = pictureUrl;
     }
 }

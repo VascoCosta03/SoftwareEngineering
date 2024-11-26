@@ -1,3 +1,4 @@
+/*
 package SoftwareEngineering.Project;
 
 import SoftwareEngineering.Project.model.User;
@@ -25,3 +26,4 @@ public class DataLoader {
         };
     }
 }
+*/
