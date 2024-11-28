@@ -4,10 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Exam Schedule</title>
-    <link rel="stylesheet" href="/images/styles.css">
-
-    <!-- FullCalendar Scripts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="/images/styles.css">
+    <style>
+        #calendar-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 100px);
+            padding: 20px;
+        }
+
+        #calendar {
+            max-width: 1000px;
+            width: 100%;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
 <header>
@@ -20,29 +40,49 @@
     </div>
 </header>
 
-<!-- Calendar Container -->
-<div id="calendar"></div>
+<div id="calendar-container">
+    <div id="calendar"></div>
+</div>
 
-<!-- FullCalendar Initialization Script -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var calendarEl = document.getElementById('calendar');
 
         var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth', // Month view
+            initialView: 'dayGridMonth',
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            events: '/api/students/exams', // Your endpoint to fetch events
-            eventColor: '#3788d8',  // Event color
-            eventClick: function(info) {
-                alert('Exam: ' + info.event.title + '\nLocation: ' + info.event.extendedProps.location);
+            events: '/api/students/exams',
+            eventColor: '#3788d8',
+            eventClick: function (info) {
+                const professor = info.event.extendedProps.professor || 'Not available';
+                const time = new Date(info.event.extendedProps.time).toLocaleString('en-US', {
+                    timeZone: 'UTC',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                Swal.fire({
+                    title: info.event.title,
+                    html: `
+            <p><strong>Location:</strong> ${info.event.extendedProps.location}</p>
+            <p><strong>Professor:</strong> ${professor}</p>
+            <p><strong>Time:</strong> ${time}</p>
+        `,
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
             },
-            locale: 'en', // Set the calendar language
-            // Optional: If you're using time zones, you may want to add:
-            // timeZone: 'UTC',
+            locale: 'en',
+            slotMinTime: '08:00:00',
+            slotMaxTime: '21:00:00',
+            timeZone: 'UTC'
         });
 
         calendar.render();

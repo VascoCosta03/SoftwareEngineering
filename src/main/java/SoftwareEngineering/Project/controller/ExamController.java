@@ -5,8 +5,6 @@ import SoftwareEngineering.Project.model.User;
 import SoftwareEngineering.Project.repository.ExamRepository;
 import SoftwareEngineering.Project.repository.UserRepository;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,9 +25,6 @@ public class ExamController {
     private final ExamRepository examRepository;
     private final UserRepository userRepository;
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
     public ExamController(ExamRepository examRepository, UserRepository userRepository) {
         this.examRepository = examRepository;
         this.userRepository = userRepository;
@@ -43,37 +38,74 @@ public class ExamController {
 
         if (userOptional.isPresent()) {
             User student = userOptional.get();
-            ObjectId studentObjectId = student.getId();  // Directly use the ObjectId
+            ObjectId studentObjectId = student.getId();
 
             List<Exam> exams = examRepository.findByStudentId(studentObjectId);
 
-            if (exams.isEmpty()) {
-                System.out.println("No exams found for student: " + studentObjectId);
-            } else {
-                exams.forEach(exam -> System.out.println("Found exam: " + exam.getSubject()));
-            }
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
-            // Format the date using ZonedDateTime, without the UTC suffix
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Custom pattern to remove [UTC]
-
-            // Map the exams to the format required by FullCalendar
             return exams.stream().map(exam -> {
                 Map<String, Object> event = new HashMap<>();
                 event.put("title", exam.getSubject());
 
-                // Ensure that exam.getDateTime() is a java.util.Date
-                Date examDate = exam.getDateTime();  // Assuming getDateTime() returns java.util.Date
+                ZonedDateTime utcDateTime = exam.getDateTime()
+                        .toInstant()
+                        .atZone(ZoneId.of("UTC"));
+                event.put("start", formatter.format(utcDateTime));
+                event.put("location", exam.getLocation());
 
-                // Convert java.util.Date to java.time.Instant
+                Optional<User> professor = userRepository.findById(exam.getProfessorId().toHexString());
+                String professorName = professor.map(User::getName).orElse("Unknown Professor");
+                event.put("professor", professorName);
+
+                String formattedTime = formatter.format(utcDateTime);
+                event.put("time", formattedTime);
+
+                return event;
+            }).collect(Collectors.toList());
+        }
+
+        return Collections.emptyList();
+    }
+
+
+
+    @GetMapping("/professors/exams")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public List<Map<String, Object>> getProfessorsExams(Authentication authentication) {
+        String username = authentication.getName();
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isPresent()) {
+            User professor = userOptional.get();
+            ObjectId professorObjectId = professor.getId();
+
+            List<Exam> exams = examRepository.findByProfessorId(professorObjectId);
+
+            if (exams.isEmpty()) {
+                System.out.println("No exams found for professor: " + professorObjectId);
+            } else {
+                exams.forEach(exam -> System.out.println("Found exam: " + exam.getSubject()));
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+            return exams.stream().map(exam -> {
+                Map<String, Object> event = new HashMap<>();
+                event.put("title", exam.getSubject());
+
+                Date examDate = exam.getDateTime();
                 Instant instant = examDate.toInstant();
-
-                // Convert Instant to ZonedDateTime using UTC
-                ZonedDateTime zonedDateTime = instant.atZone(ZoneId.of("UTC")); // Adjust timezone if needed
-
-                // Put the formatted start time into the event
+                ZonedDateTime zonedDateTime = instant.atZone(ZoneId.of("UTC"));
                 event.put("start", formatter.format(zonedDateTime));
 
                 event.put("location", exam.getLocation());
+
+                event.put("professor", professor.getName());
+
+                String formattedTime = formatter.format(zonedDateTime);
+                event.put("time", formattedTime);
+
                 return event;
             }).collect(Collectors.toList());
         }

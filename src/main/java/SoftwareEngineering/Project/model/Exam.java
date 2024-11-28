@@ -3,14 +3,13 @@ package SoftwareEngineering.Project.model;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import java.util.Date;
 
 @Document(collection = "exams")
 public class Exam {
 
     @Id
-    private ObjectId id;  // MongoDB's default _id field, mapped to the ObjectId type
+    private ObjectId id;
 
     private String subject;
     private Date dateTime;
@@ -28,7 +27,6 @@ public class Exam {
         this.studentId = studentId;
     }
 
-    // Getters and Setters
     public ObjectId getId() {
         return id;
     }
