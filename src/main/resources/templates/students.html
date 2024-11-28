@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Exam Schedule</title>
     <link rel="stylesheet" href="/images/styles.css">
+
+    <!-- FullCalendar Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
 <header>
@@ -15,8 +18,37 @@
         <span th:text="${fullName}">User Name</span>
         <img th:src="${pictureUrl}" alt="Profile Picture" />
     </div>
-
 </header>
+
+<!-- Calendar Container -->
+<div id="calendar"></div>
+
+<!-- FullCalendar Initialization Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth', // Month view
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: '/api/students/exams', // Your endpoint to fetch events
+            eventColor: '#3788d8',  // Event color
+            eventClick: function(info) {
+                alert('Exam: ' + info.event.title + '\nLocation: ' + info.event.extendedProps.location);
+            },
+            locale: 'en', // Set the calendar language
+            // Optional: If you're using time zones, you may want to add:
+            // timeZone: 'UTC',
+        });
+
+        calendar.render();
+    });
+
+</script>
 
 </body>
 </html>

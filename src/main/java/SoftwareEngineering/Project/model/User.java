@@ -1,20 +1,22 @@
 package SoftwareEngineering.Project.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.List;
 
 @Document(collection = "users")
 public class User {
 
     @Id
-    private String id;
+    private ObjectId id;
     private String firstName;
     private String lastName;
     private String username;
     private String password;
     private String role;
     private String pictureUrl;
-
     
     public User() {}
 
@@ -24,11 +26,11 @@ public class User {
         this.role = role;
     }
 
-    public String getId() {
+    public ObjectId getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(ObjectId id) {
         this.id = id;
     }
 
@@ -79,4 +81,5 @@ public class User {
     public void setPictureUrl(String pictureUrl) {
         this.pictureUrl = pictureUrl;
     }
+
 }
