@@ -30,20 +30,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/", "/index", "/css/**", "/images/**", "/login").permitAll()
+                        .requestMatchers("/api/test").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/student/**").hasRole("STUDENT")
-                        .requestMatchers("/professor/**").hasRole("PROFESSOR")
+                        .requestMatchers("/students/**").authenticated()
+                        .requestMatchers("/professors/**").hasRole("PROFESSOR")
+                        .requestMatchers("/api/students/exams").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .successHandler(customAuthenticationSuccessHandler()) // Custom authentication success handler
+                        .successHandler(customAuthenticationSuccessHandler())
                         .permitAll()
                 )
                 .logout(logout -> logout.permitAll());
-
 
         return http.build();
     }
@@ -54,12 +56,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler customAuthenticationSuccessHandler() {
         return (request, response, authentication) -> {
-            String redirectUrl = determineRedirectUrl(authentication); // Determine redirect URL based on roles
+            String redirectUrl = determineRedirectUrl(authentication);
             response.sendRedirect(redirectUrl);
         };
     }
 
-    // Method to determine redirect URL based on roles
     private String determineRedirectUrl(Authentication authentication) {
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
@@ -73,7 +74,6 @@ public class SecurityConfig {
             }
         }
 
-        // Default redirect if no roles are found
         return "/index";
     }
 

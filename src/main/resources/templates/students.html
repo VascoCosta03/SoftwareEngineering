@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="/images/styles.css">
     <style>
         #calendar-container {
@@ -40,9 +41,59 @@
     </div>
 </header>
 
-<div id="calendar-container">
-    <div id="calendar"></div>
+<div class="container-fluid mt-3">
+    <div class="row">
+        <!-- Button Column -->
+        <div class="col-md-2">
+            <button id="addExamButton" class="btn btn-primary btn-block mb-3">
+                Add Exam
+            </button>
+        </div>
+
+        <!-- Calendar Column -->
+        <div class="col-md-10">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <!-- Add Exam Modal -->
+    <div class="modal fade" id="addExamModal" tabindex="-1" aria-labelledby="addExamModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addExamModalLabel">Add New Exam</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addExamForm">
+                        <div class="mb-3">
+                            <label for="examTitle" class="form-label">Exam Title</label>
+                            <input type="text" class="form-control" id="examTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="examDate" class="form-label">Exam Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="examDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="examLocation" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="examLocation" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="examProfessorId" class="form-label">Professor</label>
+                            <select class="form-control" id="examProfessorId" required>
+                                <option value="">Select Professor</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Add Exam</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -59,7 +110,7 @@
             eventColor: '#3788d8',
             eventClick: function (info) {
                 const professor = info.event.extendedProps.professor || 'Not available';
-                const time = new Date(info.event.extendedProps.time).toLocaleString('en-US', {
+                const time = new Date(info.event.start).toLocaleString('en-US', {
                     timeZone: 'UTC',
                     hour: '2-digit',
                     minute: '2-digit',
@@ -71,10 +122,10 @@
                 Swal.fire({
                     title: info.event.title,
                     html: `
-            <p><strong>Location:</strong> ${info.event.extendedProps.location}</p>
-            <p><strong>Professor:</strong> ${professor}</p>
-            <p><strong>Time:</strong> ${time}</p>
-        `,
+                    <p><strong>Location:</strong> ${info.event.extendedProps.location}</p>
+                    <p><strong>Professor:</strong> ${professor}</p>
+                    <p><strong>Time:</strong> ${time}</p>
+                `,
                     icon: 'info',
                     confirmButtonText: 'OK'
                 });
@@ -86,7 +137,107 @@
         });
 
         calendar.render();
+
+        // Button to Add Exam
+        var addExamButton = document.getElementById('addExamButton');
+
+        // Modal for Adding Exams
+        var addExamModal = new bootstrap.Modal(document.getElementById('addExamModal'));
+
+        // Show Modal on Button Click
+        addExamButton.addEventListener('click', function () {
+            addExamModal.show();
+        });
+
+        fetch('/api/professors')
+            .then(response => response.json())
+            .then(data => {
+                const professorSelect = document.getElementById('examProfessorId');
+
+                // Clear any existing options before adding new ones
+                professorSelect.innerHTML = '';
+
+                // Optionally add a default "Choose a Professor" option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';  // Empty value for the placeholder
+                defaultOption.textContent = 'Choose a Professor';
+                professorSelect.appendChild(defaultOption);
+
+                // Iterate over each professor in the fetched data
+                data.forEach(professor => {
+                    const option = document.createElement('option');
+
+                    option.value = professor.id;
+                    option.textContent = professor.name; // Assuming professor's name is in 'name' field
+
+                    professorSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching professors:', error));
+
+
+        // Handle Add Exam Form Submission
+        document.getElementById('addExamForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            // Get form data
+            var title = document.getElementById('examTitle').value;
+            var date = document.getElementById('examDate').value;
+            var location = document.getElementById('examLocation').value;
+            var professorId = document.getElementById('examProfessorId').value;
+
+            // Format the date
+            var localDate = new Date(date);
+            var utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+            var formattedDate = new Date(utcDate).toISOString();
+
+
+            if (professorId.length !== 24) {
+                alert('Invalid professor ID');
+                return;
+            }
+
+            // Send data to backend
+            fetch('/api/students/exams', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: title,
+                    start: formattedDate,
+                    location: location,
+                    professorId: professorId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add the event to the calendar
+                        calendar.addEvent({
+                            title: data.title,
+                            start: data.start,
+                            location: data.location,
+                            extendedProps: {
+                                professor: data.professor.name // Add professor name here
+                            },
+                            allDay: false
+                        });
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Close the modal
+            addExamModal.hide();
+
+            // Reset the form
+            event.target.reset();
+        });
     });
+
+
 
 </script>
 
