@@ -37,18 +37,11 @@ public class UserController {
         return "index";
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin")
-    public String admin() {
-        return "admin";
-    }
-
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/students")
     public String student(Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-
         Optional<User> userOptional = userRepository.findByUsername(username);
         if (userOptional.isPresent()) {
             User currentUser = userOptional.get();
