@@ -11,14 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="/images/styles.css">
     <style>
-        #calendar-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: calc(100vh - 100px);
-            padding: 20px;
-        }
-
         #calendar {
             max-width: 1000px;
             width: 100%;
@@ -43,14 +35,12 @@
 
 <div class="container-fluid mt-3">
     <div class="row">
-        <!-- Button Column -->
         <div class="col-md-2">
             <button id="addExamButton" class="btn btn-primary btn-block mb-3">
                 Add Exam
             </button>
         </div>
 
-        <!-- Calendar Column -->
         <div class="col-md-10">
             <div id="calendar"></div>
         </div>
@@ -138,13 +128,10 @@
 
         calendar.render();
 
-        // Button to Add Exam
         var addExamButton = document.getElementById('addExamButton');
 
-        // Modal for Adding Exams
         var addExamModal = new bootstrap.Modal(document.getElementById('addExamModal'));
 
-        // Show Modal on Button Click
         addExamButton.addEventListener('click', function () {
             addExamModal.show();
         });
@@ -154,21 +141,18 @@
             .then(data => {
                 const professorSelect = document.getElementById('examProfessorId');
 
-                // Clear any existing options before adding new ones
                 professorSelect.innerHTML = '';
 
-                // Optionally add a default "Choose a Professor" option
                 const defaultOption = document.createElement('option');
-                defaultOption.value = '';  // Empty value for the placeholder
+                defaultOption.value = '';
                 defaultOption.textContent = 'Choose a Professor';
                 professorSelect.appendChild(defaultOption);
 
-                // Iterate over each professor in the fetched data
                 data.forEach(professor => {
                     const option = document.createElement('option');
 
                     option.value = professor.id;
-                    option.textContent = professor.name; // Assuming professor's name is in 'name' field
+                    option.textContent = professor.name;
 
                     professorSelect.appendChild(option);
                 });
@@ -176,17 +160,14 @@
             .catch(error => console.error('Error fetching professors:', error));
 
 
-        // Handle Add Exam Form Submission
         document.getElementById('addExamForm').addEventListener('submit', function (event) {
             event.preventDefault();
 
-            // Get form data
             var title = document.getElementById('examTitle').value;
             var date = document.getElementById('examDate').value;
             var location = document.getElementById('examLocation').value;
             var professorId = document.getElementById('examProfessorId').value;
 
-            // Format the date
             var localDate = new Date(date);
             var utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
             var formattedDate = new Date(utcDate).toISOString();
@@ -197,7 +178,6 @@
                 return;
             }
 
-            // Send data to backend
             fetch('/api/students/exams', {
                 method: 'POST',
                 headers: {
@@ -213,13 +193,12 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Add the event to the calendar
                         calendar.addEvent({
                             title: data.title,
                             start: data.start,
                             location: data.location,
                             extendedProps: {
-                                professor: data.professor.name // Add professor name here
+                                professor: data.professor.name
                             },
                             allDay: false
                         });
@@ -229,10 +208,8 @@
                 })
                 .catch(error => console.error('Error:', error));
 
-            // Close the modal
             addExamModal.hide();
 
-            // Reset the form
             event.target.reset();
         });
     });

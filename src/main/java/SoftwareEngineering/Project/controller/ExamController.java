@@ -86,8 +86,6 @@ public class ExamController {
 
             if (exams.isEmpty()) {
                 System.out.println("No exams found for professor: " + professorObjectId);
-            } else {
-                exams.forEach(exam -> System.out.println("Found exam: " + exam.getSubject()));
             }
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -132,7 +130,6 @@ public class ExamController {
 
             ObjectId professorId = new ObjectId(professorIdStr);
 
-            // Parse the exam date
             DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
             ZonedDateTime examDateTime;
             try {
@@ -154,7 +151,6 @@ public class ExamController {
             Optional<User> professor = userRepository.findById(professorId.toHexString());
             String professorName = professor.map(User::getName).orElse("Unknown Professor");
 
-            // Prepare a response consistent with the frontend expectation
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("title", exam.getSubject());
