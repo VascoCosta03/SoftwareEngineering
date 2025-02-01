@@ -5,6 +5,8 @@ import SoftwareEngineering.Project.model.User;
 import SoftwareEngineering.Project.repository.ExamRepository;
 import SoftwareEngineering.Project.repository.UserRepository;
 import org.bson.types.ObjectId;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -63,6 +65,8 @@ public class ExamController {
                 String formattedTime = formatter.format(utcDateTime);
                 event.put("time", formattedTime);
 
+                event.put("status", exam.getStatus());
+
                 return event;
             }).collect(Collectors.toList());
         }
@@ -92,6 +96,7 @@ public class ExamController {
 
             return exams.stream().map(exam -> {
                 Map<String, Object> event = new HashMap<>();
+                event.put("id", exam.getId().toHexString());
                 event.put("title", exam.getSubject());
 
                 Date examDate = exam.getDateTime();
@@ -105,6 +110,8 @@ public class ExamController {
 
                 String formattedTime = formatter.format(zonedDateTime);
                 event.put("time", formattedTime);
+
+                event.put("status", exam.getStatus());
 
                 return event;
             }).collect(Collectors.toList());
@@ -145,6 +152,7 @@ public class ExamController {
             exam.setLocation(location);
             exam.setStudentId(studentObjectId);
             exam.setProfessorId(professorId);
+            exam.setStatus("Pending");
 
             examRepository.save(exam);
 
@@ -177,7 +185,24 @@ public class ExamController {
         }).collect(Collectors.toList());
     }
 
+    @PatchMapping("/professors/exams/{examId}/status")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public ResponseEntity<?> updateExamStatus(@PathVariable String examId, @RequestBody Map<String, String> request) {
+        Optional<Exam> examOptional = examRepository.findById(new ObjectId(examId));
 
+        if (examOptional.isPresent()) {
+            Exam exam = examOptional.get();
+            String newStatus = request.get("status");
 
+            if (!newStatus.equals("Accepted") && !newStatus.equals("Rejected")) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid status"));
+            }
 
+            exam.setStatus(newStatus);
+            examRepository.save(exam);
+
+            return ResponseEntity.ok(Map.of("message", "Exam status updated successfully", "exam", exam));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Exam not found"));
+    }
 }

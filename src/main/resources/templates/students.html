@@ -20,6 +20,10 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
         }
+        .fc-event {
+            color: white !important;
+        }
+
     </style>
 </head>
 <body>
@@ -46,7 +50,6 @@
         </div>
     </div>
 
-    <!-- Add Exam Modal -->
     <div class="modal fade" id="addExamModal" tabindex="-1" aria-labelledby="addExamModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -97,9 +100,19 @@
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
             events: '/api/students/exams',
-            eventColor: '#3788d8',
+            eventDidMount: function(info) {
+                // Change color based on exam status
+                if (info.event.extendedProps.status === "Pending") {
+                    info.el.style.backgroundColor = "#3788d8"; // Blue
+                } else if (info.event.extendedProps.status === "Accepted") {
+                    info.el.style.backgroundColor = "green"; // Green
+                } else if (info.event.extendedProps.status === "Rejected") {
+                    info.el.style.backgroundColor = "red"; // Red
+                }
+            },
             eventClick: function (info) {
                 const professor = info.event.extendedProps.professor || 'Not available';
+                const status = info.event.extendedProps.status || 'Pending';
                 const time = new Date(info.event.start).toLocaleString('en-US', {
                     timeZone: 'UTC',
                     hour: '2-digit',
@@ -114,6 +127,7 @@
                     html: `
                     <p><strong>Location:</strong> ${info.event.extendedProps.location}</p>
                     <p><strong>Professor:</strong> ${professor}</p>
+                    <p><strong>Status:</strong> ${status}</p>
                     <p><strong>Time:</strong> ${time}</p>
                 `,
                     icon: 'info',

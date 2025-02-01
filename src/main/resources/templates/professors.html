@@ -27,6 +27,9 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
         }
+        .fc-event {
+            color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -57,9 +60,19 @@
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
             events: '/api/professors/exams',
-            eventColor: '#3788d8',
+            eventDidMount: function(info) {
+                // Change color based on exam status
+                if (info.event.extendedProps.status === "Pending") {
+                    info.el.style.backgroundColor = "#3788d8"; // Blue
+                } else if (info.event.extendedProps.status === "Accepted") {
+                    info.el.style.backgroundColor = "green"; // Green
+                } else if (info.event.extendedProps.status === "Rejected") {
+                    info.el.style.backgroundColor = "red"; // Red
+                }
+            },
             eventClick: function (info) {
                 const professor = info.event.extendedProps.professor || 'Not assigned';
+                const status = info.event.extendedProps.status || 'Pending';
                 const time = new Date(info.event.extendedProps.time).toLocaleString('en-US', {
                     timeZone: 'UTC',
                     hour: '2-digit',
@@ -69,13 +82,35 @@
                     day: 'numeric'
                 });
 
+                let buttons = "";
+
+                if (status === "Pending") {
+                    buttons = `
+            <button id="acceptExam" class="swal2-confirm swal2-styled" style="background:green;">Accept</button>
+            <button id="rejectExam" class="swal2-cancel swal2-styled" style="background:red;">Reject</button>
+        `;
+                }
+
                 Swal.fire({
                     title: info.event.title,
                     html: `
             <p><strong>Location:</strong> ${info.event.extendedProps.location}</p>
             <p><strong>Professor:</strong> ${professor}</p>
+            <p><strong>Status:</strong> ${status}</p>
             <p><strong>Time:</strong> ${time}</p>
+            ${buttons}
         `,
+                    showCancelButton: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        document.getElementById("acceptExam")?.addEventListener("click", function () {
+                            updateExamStatus(info.event.id, "Accepted");
+                        });
+
+                        document.getElementById("rejectExam")?.addEventListener("click", function () {
+                            updateExamStatus(info.event.id, "Rejected");
+                        });
+                    },
                     icon: 'info',
                     confirmButtonText: 'OK'
                 });
@@ -88,6 +123,26 @@
 
         calendar.render();
     });
+
+    function updateExamStatus(examId, status) {
+        fetch(`/api/professors/exams/${examId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: status })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    Swal.fire("Success", data.message, "success").then(() => {
+                        location.reload(); // Refresh calendar
+                    });
+                }
+            })
+            .catch(error => console.error("Error updating status:", error));
+    }
+
 </script>
 
 </body>

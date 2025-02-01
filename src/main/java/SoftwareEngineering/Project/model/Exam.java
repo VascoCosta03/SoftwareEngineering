@@ -16,8 +16,11 @@ public class Exam {
     private String location;
     private ObjectId professorId;
     private ObjectId studentId;
+    private String status;
 
-    public Exam() {}
+    public Exam() {
+        this.status = "Pending";
+    }
 
     public Exam(String subject, Date dateTime, String location, ObjectId professorId, ObjectId studentId) {
         this.subject = subject;
@@ -73,5 +76,13 @@ public class Exam {
 
     public void setStudentId(ObjectId studentId) {
         this.studentId = studentId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
