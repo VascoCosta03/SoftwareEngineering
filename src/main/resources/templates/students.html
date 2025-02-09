@@ -24,6 +24,17 @@
             color: white !important;
         }
 
+        #logoutButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #logoutButton:hover {
+            background-color: #c82333;
+        }
+
     </style>
 </head>
 <body>
@@ -85,6 +96,12 @@
         </div>
     </div>
 
+    <div class="position-fixed bottom-0 end-0 m-3">
+        <button id="logoutButton" class="btn btn-danger">
+            <i class="bi bi-box-arrow-right"></i> Log Out
+        </button>
+    </div>
+
 </div>
 
 
@@ -122,6 +139,19 @@
                     day: 'numeric'
                 });
 
+                let buttons = "";
+
+                if (status === "Pending") {
+                    buttons = `<p style="color:blue;"><strong>Status:</strong> Pending</p>`;
+                } else if (status === "Accepted") {
+                    buttons = `<p style="color:green;"><strong>Status:</strong> Accepted</p>`;
+                } else if (status === "Rejected") {
+                    buttons = `
+            <p style="color:red;"><strong>Status:</strong> Rejected</p>
+            <button id="editExam" class="swal2-confirm swal2-styled" style="background:orange;">Edit & Resubmit</button>
+        `;
+                }
+
                 Swal.fire({
                     title: info.event.title,
                     html: `
@@ -129,7 +159,15 @@
                     <p><strong>Professor:</strong> ${professor}</p>
                     <p><strong>Status:</strong> ${status}</p>
                     <p><strong>Time:</strong> ${time}</p>
+                    ${buttons}
                 `,
+                    showCancelButton: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        document.getElementById("editExam")?.addEventListener("click", function () {
+                            openEditModal(info.event);
+                        });
+                    },
                     icon: 'info',
                     confirmButtonText: 'OK'
                 });
@@ -208,6 +246,7 @@
                 .then(data => {
                     if (data.success) {
                         calendar.addEvent({
+                            id: data.id,
                             title: data.title,
                             start: data.start,
                             location: data.location,
@@ -227,6 +266,88 @@
             event.target.reset();
         });
     });
+    function openEditModal(event) {
+        console.log("Exam ID1:", event.id);
+        Swal.fire({
+            title: "Edit Exam",
+            html: `
+        <input type="text" id="editSubject" class="swal2-input" placeholder="Subject" value="${event.title}">
+        <input type="datetime-local" id="editDate" class="swal2-input" value="${event.start.toISOString().slice(0, 16)}">
+        <input type="text" id="editLocation" class="swal2-input" placeholder="Location" value="${event.extendedProps.location}">
+        `,
+            showCancelButton: true,
+            confirmButtonText: "Update Exam",
+            preConfirm: () => {
+                const localDate = document.getElementById("editDate").value;
+                const localDateTime = new Date(localDate);
+                const utcDate = new Date(localDateTime.getTime() - localDateTime.getTimezoneOffset() * 60000).toISOString();
+
+                return {
+                    id: event.id,
+                    subject: document.getElementById("editSubject").value,
+                    date: utcDate,
+                    location: document.getElementById("editLocation").value
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateExam(result.value);
+            }
+        });
+    }
+
+    function updateExam(updatedExam) {
+        console.log("Updating Exam ID:", updatedExam.id);
+
+        fetch(`/api/students/exams/${updatedExam.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                subject: updatedExam.subject,
+                dateTime: new Date(updatedExam.date).toISOString(),
+                location: updatedExam.location,
+                status: "Pending"
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                Swal.fire("Success", "Exam updated and sent for approval.", "success").then(() => {
+                    location.reload();
+                });
+            })
+            .catch(error => {
+                console.error("Error updating exam:", error);
+                Swal.fire("Error", error.message || "Something went wrong!", "error");
+            });
+    }
+
+    document.getElementById('logoutButton').addEventListener('click', function () {
+        // Perform logout action
+        fetch('/logout', {
+            method: 'POST',
+            credentials: 'include'
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Redirect to the login page
+                    window.location.href = '/login';
+                } else {
+                    alert('Logout failed. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                alert('An error occurred during logout.');
+            });
+    });
+
 
 
 

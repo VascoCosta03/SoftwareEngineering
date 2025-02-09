@@ -2,6 +2,9 @@ package SoftwareEngineering.Project.controller;
 
 import SoftwareEngineering.Project.model.User;
 import SoftwareEngineering.Project.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,7 +25,7 @@ public class UserController {
     @GetMapping("/login")
     public String login(@RequestParam(value = "logout", required = false) String logout, Model model) {
         if (logout != null) {
-            model.addAttribute("logoutMessage", "You have been successfully logged out.");
+            model.addAttribute("logoutMessage", "You have bee   n successfully logged out.");
         }
         return "login";
     }
@@ -35,6 +38,14 @@ public class UserController {
     @GetMapping("/index")
     public String index() {
         return "index";
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        // Invalidate the session
+        request.getSession().invalidate();
+        // Clear any authentication tokens or cookies
+        return ResponseEntity.ok().body(Collections.singletonMap("message", "Logged out successfully"));
     }
 
     @PreAuthorize("hasRole('STUDENT')")

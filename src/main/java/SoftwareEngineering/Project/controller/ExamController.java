@@ -66,6 +66,8 @@ public class ExamController {
 
                 event.put("status", exam.getStatus());
 
+                event.put("id", exam.getId().toHexString());
+
                 return event;
             }).collect(Collectors.toList());
         }
@@ -204,4 +206,25 @@ public class ExamController {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Exam not found"));
     }
+
+    @PutMapping("/students/exams/{id}")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<?> updateExam(@PathVariable String id, @RequestBody Exam updatedExam) {
+        Optional<Exam> existingExamOpt = examRepository.findById(new ObjectId(id));
+
+        if (!existingExamOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("message", "Exam not found"));
+        }
+
+        Exam existingExam = existingExamOpt.get();
+        existingExam.setSubject(updatedExam.getSubject());
+        existingExam.setDateTime(updatedExam.getDateTime());
+        existingExam.setLocation(updatedExam.getLocation());
+        existingExam.setStatus("Pending");
+
+        examRepository.save(existingExam);
+
+        return ResponseEntity.ok(Collections.singletonMap("success", true));
+    }
+
 }

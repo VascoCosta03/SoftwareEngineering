@@ -30,6 +30,17 @@
         .fc-event {
             color: white !important;
         }
+
+        #logoutButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #logoutButton:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -46,6 +57,12 @@
 
 <div id="calendar-container">
     <div id="calendar"></div>
+</div>
+
+<div class="position-fixed bottom-0 end-0 m-3">
+    <button id="logoutButton" class="btn btn-danger">
+        <i class="bi bi-box-arrow-right"></i> Log Out
+    </button>
 </div>
 
 <script>
@@ -142,6 +159,25 @@
             })
             .catch(error => console.error("Error updating status:", error));
     }
+
+    document.getElementById('logoutButton').addEventListener('click', function () {
+        // Perform logout action
+        fetch('/logout', {
+            method: 'POST',
+            credentials: 'include'
+        })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/login';
+                } else {
+                    alert('Logout failed. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                alert('An error occurred during logout.');
+            });
+    });
 
 </script>
 
